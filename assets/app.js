@@ -15,6 +15,7 @@ const state = {
   refreshTimer: null,
   isRefreshing: false,
   defaultChartNarrative: '',
+  isChartFullscreen: false,
 };
 
 function fmt(x, n = 1) {
@@ -139,6 +140,107 @@ function tooltipBox(lines) {
   return `<div style="max-width:360px;white-space:normal;line-height:1.25">${lines.filter(Boolean).join('<br>')}</div>`;
 }
 
+function ensureChartTools() {
+  const panel = document.querySelector('.chart-panel');
+  if (!panel || $('chartTools')) return;
+  const tools = document.createElement('div');
+  tools.id = 'chartTools';
+  tools.className = 'chart-tools';
+  tools.innerHTML = `
+    <button type="button" data-tool="expand" title="Expand chart to full screen">⛶</button>
+    <button type="button" data-tool="zoom-in" title="Zoom in">＋</button>
+    <button type="button" data-tool="zoom-out" title="Zoom out">－</button>
+    <button type="button" data-tool="reset" title="Reset zoom">↺</button>
+  `;
+  panel.appendChild(tools);
+  tools.addEventListener('click', ev => {
+    const btn = ev.target.closest('button[data-tool]');
+    if (!btn) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    const tool = btn.dataset.tool;
+    if (tool === 'expand') toggleChartFullscreen();
+    if (tool === 'zoom-in') chartZoom('in');
+    if (tool === 'zoom-out') chartZoom('out');
+    if (tool === 'reset') chartZoom('reset');
+  });
+}
+
+function toggleChartFullscreen(force = null) {
+  const next = force === null ? !state.isChartFullscreen : Boolean(force);
+  state.isChartFullscreen = next;
+  document.body.classList.toggle('chart-fullscreen', next);
+  const btn = document.querySelector('#chartTools [data-tool="expand"]');
+  if (btn) {
+    btn.textContent = next ? '↙' : '⛶';
+    btn.title = next ? 'Collapse chart back to dashboard' : 'Expand chart to full screen';
+  }
+  setTimeout(resizeChart, 80);
+}
+
+function installChartUtilities() {
+  if (!state.chart) return;
+  const toolbox = {
+    show: true,
+    right: 6,
+    top: 0,
+    itemSize: 9,
+    itemGap: 4,
+    emphasis: { iconStyle: { borderColor: '#dff7ff' } },
+    iconStyle: { borderColor: 'rgba(189,228,244,.38)', borderWidth: 1 },
+    feature: {
+      dataZoom: {
+        title: { zoom: 'Native zoom', back: 'Zoom back' },
+        yAxisIndex: state.chartTab === 'phase' ? 0 : 'none'
+      },
+      restore: { title: 'Reset' }
+    }
+  };
+  const dataZoom = state.chartTab === 'phase'
+    ? [
+        { id: 'zoomX', type: 'inside', xAxisIndex: 0, filterMode: 'none', start: 0, end: 100, zoomOnMouseWheel: true, moveOnMouseWheel: true, moveOnMouseMove: true },
+        { id: 'zoomY', type: 'inside', yAxisIndex: 0, filterMode: 'none', start: 0, end: 100, zoomOnMouseWheel: true, moveOnMouseWheel: true, moveOnMouseMove: true }
+      ]
+    : [
+        { id: 'zoomX', type: 'inside', xAxisIndex: 0, filterMode: 'none', start: 0, end: 100, zoomOnMouseWheel: true, moveOnMouseWheel: true, moveOnMouseMove: true }
+      ];
+  state.chart.setOption({ toolbox, dataZoom }, false);
+}
+
+function chartZoom(kind) {
+  if (!state.chart) return;
+  if (kind === 'reset') {
+    state.chart.dispatchAction({ type: 'dataZoom', dataZoomId: 'zoomX', start: 0, end: 100 });
+    state.chart.dispatchAction({ type: 'dataZoom', dataZoomId: 'zoomY', start: 0, end: 100 });
+    state.chart.dispatchAction({ type: 'restore' });
+    setTimeout(() => installChartUtilities(), 30);
+    return;
+  }
+  const opt = state.chart.getOption();
+  const zooms = (opt.dataZoom || []).filter(z => z.id === 'zoomX' || z.id === 'zoomY');
+  const factor = kind === 'in' ? 0.72 : 1.38;
+  zooms.forEach(z => {
+    const start = Number.isFinite(Number(z.start)) ? Number(z.start) : 0;
+    const end = Number.isFinite(Number(z.end)) ? Number(z.end) : 100;
+    const mid = (start + end) / 2;
+    const width = Math.max(3, Math.min(100, (end - start) * factor));
+    const nextStart = Math.max(0, mid - width / 2);
+    const nextEnd = Math.min(100, mid + width / 2);
+    state.chart.dispatchAction({ type: 'dataZoom', dataZoomId: z.id, start: nextStart, end: nextEnd });
+  });
+}
+
+function pathPointNarrative(f, data, trail) {
+  const r = data?.row || {};
+  const i = Number(data?.pathIndex || 0);
+  const prev = trail?.[Math.max(0, i - 1)]?.row;
+  const next = trail?.[Math.min((trail?.length || 1) - 1, i + 1)]?.row;
+  const fromTo = prev && next
+    ? `Path segment: ${esc(dateShort(prev.ts))} → ${esc(dateShort(r.ts))} → ${esc(dateShort(next.ts))}.`
+    : `Path endpoint: ${esc(dateShort(r.ts))}.`;
+  return `${pointNarrativeFromRow(f, r)} <b>${fromTo}</b> This line is selected-feed chronology in Reach × Dust space, not a hub edge, not causality between feeds, and not a price vector.`;
+}
+
 async function init() {
   $('themeBtn').addEventListener('click', () => {
     document.documentElement.classList.toggle('light');
@@ -166,6 +268,7 @@ async function init() {
   $('viewSelect').addEventListener('change', render);
   $('domainSelect').addEventListener('change', e => { state.domain = e.target.value; populateFeedSelect(); render(); });
   window.addEventListener('resize', resizeChart);
+  ensureChartTools();
   await loadBundle({ initial: true });
   startDataRefreshPoll();
 }
@@ -392,6 +495,7 @@ function drawChart() {
   if (state.chartTab === 'phase') drawPhase(f);
   if (state.chartTab === 'ridge') drawRidge(f);
   if (state.chartTab === 'signals') drawSignals(f);
+  installChartUtilities();
   resizeChart();
 }
 function resizeChart() { if (state.chart) setTimeout(() => state.chart.resize(), 30); }
@@ -406,60 +510,70 @@ function setDefaultNarrative(f) {
 }
 function phaseTooltip(params, f) {
   const d = params.data || {};
-  if (params.seriesName === 'Current feeds') {
-    const x = d.feed;
+  if (params.seriesName === 'Selected feed current') {
+    const x = d.feed || f;
     const c = x?.current || {};
     return tooltipBox([
       `<b>${esc(x?.label || params.name)}</b>`,
-      `State: <b>${esc(c.state || 'NA')}</b>` ,
+      `Current state: <b>${esc(c.state || 'NA')}</b>`,
       `Reach ${fmt(c.reach, 1)} — ${esc(reachBand(c.reach))}`,
       `Dust ${fmt(c.dust, 1)} — ${esc(dustBand(c.dust))}`,
       `dReach ${signed(c.d_reach, 2)} — ${esc(velocityBand(c.d_reach))}`,
       `Risk ${fmt(c.risk, 1)} · scale confirmation ${pct(c.scale_agreement)}`,
-      `<i>${esc(phaseEnglish(c.reach, c.dust, c.d_reach, c.scale_agreement))}</i>`
+      `<i>${esc(phaseEnglish(c.reach, c.dust, c.d_reach, c.scale_agreement))}</i>`,
+      `Only the selected feed is plotted. Other feeds are hidden from this chart to avoid false hub/link interpretation.`
     ]);
   }
-  if (params.seriesName === 'Selected path') {
+  if (params.seriesName === 'Selected chronology') {
     const r = d.row || {};
     return tooltipBox([
       `<b>${esc(f.label)} chronological path</b>`,
       `${esc(dateShort(r.ts))}`,
-      `This line is not a hub-to-hub edge. It is the selected feed moving through Reach × Dust state space over time.`,
+      `From older observations toward the latest state. This is a time path for the selected feed only.` ,
       `Reach ${fmt(r.reach, 1)} · Dust ${fmt(r.dust, 1)} · Risk ${fmt(r.risk, 1)}`,
       `dReach ${signed(r.d_reach, 2)} — ${esc(velocityBand(r.d_reach))}`,
       `<i>${esc(phaseEnglish(r.reach, r.dust, r.d_reach, r.scale_agreement))}</i>`
     ]);
   }
+  if (params.seriesName === 'Path start' || params.seriesName === 'Path now') {
+    const r = d.row || {};
+    return tooltipBox([
+      `<b>${esc(params.seriesName)}</b>`,
+      `${esc(dateShort(r.ts))}`,
+      `Reach ${fmt(r.reach, 1)} · Dust ${fmt(r.dust, 1)} · Risk ${fmt(r.risk, 1)}`
+    ]);
+  }
   return '';
 }
 function drawPhase(f) {
-  $('chartTitle').textContent = 'Reach × Dust phase diagram';
-  $('chartSubtitle').textContent = 'Circles are current live feeds. Cyan path is selected-feed chronology: old → now. It is not a hub-link graph.';
+  $('chartTitle').textContent = `${f.label} Reach × Dust`;
+  $('chartSubtitle').textContent = 'Selected feed only. Cyan line is chronology: older observations → latest. No other hubs/indices are drawn.';
   setDefaultNarrative(f);
-  const feeds = filteredFeeds();
-  const all = feeds.map(x => ({
-    name: x.label,
-    feed: x,
-    value: [clamp(x.current.reach), clamp(x.current.dust), clamp(x.current.risk)],
-    itemStyle: { color: colorByState(x.current.state) },
-  }));
+
   const rawTrail = (f.phase_tail || []);
-  const trailTail = $('viewSelect').value === 'recent' ? rawTrail.slice(-24) : rawTrail.slice(-80);
+  const trailTail = $('viewSelect').value === 'recent' ? rawTrail.slice(-16) : rawTrail.slice(-48);
   const trail = trailTail.map((p, i) => ({
     name: dateShort(p.ts),
     row: p,
-    step: i,
+    pathIndex: i,
     value: [clamp(p.reach), clamp(p.dust), clamp(p.risk)],
   }));
   const startPoint = trail[0] || null;
   const endPoint = trail[trail.length - 1] || null;
   const current = currentOf(f);
+  const currentPoint = {
+    name: f.label,
+    value: [clamp(current.reach), clamp(current.dust), clamp(current.risk)],
+    feed: f,
+    itemStyle: { color: colorByState(current.state) },
+  };
+
   const option = {
     backgroundColor: 'transparent',
     animation: false,
     tooltip: { trigger: 'item', confine: true, formatter: p => phaseTooltip(p, f) },
     legend: { show: false },
-    grid: { left: 48, right: 22, top: 26, bottom: 42 },
+    grid: { left: 48, right: 22, top: 28, bottom: 42 },
     xAxis: {
       name: 'Reach / retained coherence →', min: 0, max: 100,
       nameLocation: 'middle', nameGap: 28,
@@ -476,7 +590,7 @@ function drawPhase(f) {
     },
     graphic: [
       { type: 'text', left: '71%', top: '73%', style: { text: 'STABLE\nhigh reach / low dust', fill: 'rgba(206,255,216,.75)', font: '11px sans-serif', textAlign: 'center' } },
-      { type: 'text', left: 58, top: 28, style: { text: 'Path direction: older observations → latest selected state. Circles are feeds; path is time, not edges.', fill: 'rgba(189,228,244,.72)', font: '10px sans-serif' } },
+      { type: 'text', left: 58, top: 28, style: { text: 'Selected feed only. Cyan trail = chronological state path, old → now. No hub-to-hub edges.', fill: 'rgba(189,228,244,.72)', font: '10px sans-serif' } },
       { type: 'text', left: '70%', top: '24%', style: { text: 'WATCH\ncoherent but noisy', fill: 'rgba(255,238,185,.75)', font: '11px sans-serif', textAlign: 'center' } },
       { type: 'text', left: '24%', top: '23%', style: { text: 'FRAGILE / CRITICAL\nreach down + dust up', fill: 'rgba(255,170,170,.75)', font: '11px sans-serif', textAlign: 'center' } },
       { type: 'text', left: '23%', top: '73%', style: { text: 'DORMANT / DECOUPLED\nlow reach / low dust', fill: 'rgba(189,228,244,.55)', font: '11px sans-serif', textAlign: 'center' } },
@@ -496,46 +610,45 @@ function drawPhase(f) {
         }
       },
       {
-        name: 'Selected path', type: 'line', data: trail, encode: { x: 0, y: 1 },
-        showSymbol: true, smooth: false, symbol: ['circle', 'arrow'], symbolSize: [5, 12],
-        lineStyle: { width: 2.2, color: '#62d4ff', opacity: 0.60 },
-        itemStyle: { color: '#62d4ff', opacity: 0.72 },
-        emphasis: { focus: 'series' },
+        name: 'Selected chronology', type: 'line', data: trail, encode: { x: 0, y: 1 },
+        showSymbol: true, smooth: false, symbol: 'circle', symbolSize: 4,
+        lineStyle: { width: 1.6, color: '#62d4ff', opacity: 0.50 },
+        itemStyle: { color: '#62d4ff', opacity: 0.58 },
+        emphasis: { focus: 'series', lineStyle: { width: 2.4, opacity: 0.86 } },
         z: 3,
       },
       {
         name: 'Path start', type: 'scatter', data: startPoint ? [startPoint] : [], encode: { x: 0, y: 1 },
         symbolSize: 8, itemStyle: { color: 'rgba(98,212,255,.45)' },
         label: { show: true, formatter: 'start', fontSize: 9, color: '#8fb4c4', position: 'left' },
-        tooltip: { show: false }, z: 4,
+        z: 4,
       },
       {
-        name: 'Path now', type: 'effectScatter', data: endPoint ? [endPoint] : [], encode: { x: 0, y: 1 },
-        rippleEffect: { scale: 2.2, brushType: 'stroke' }, symbolSize: 13,
+        name: 'Path now', type: 'scatter', data: endPoint ? [endPoint] : [], encode: { x: 0, y: 1 },
+        symbol: 'arrow', symbolRotate: 0, symbolSize: 14,
         itemStyle: { color: '#62d4ff' },
         label: { show: true, formatter: 'now', fontSize: 10, color: '#dff7ff', position: 'right' },
-        tooltip: { show: false }, z: 5,
+        z: 5,
       },
       {
-        name: 'Current feeds', type: 'scatter', data: all, encode: { x: 0, y: 1 },
-        symbolSize: p => 10 + Math.min(22, (p[2] || 0) / 4),
-        label: { show: true, formatter: p => shortLabel(p.data.feed), fontSize: 9, color: '#dff7ff', position: 'right' },
+        name: 'Selected feed current', type: 'effectScatter', data: [currentPoint], encode: { x: 0, y: 1 },
+        rippleEffect: { scale: 2.6, brushType: 'stroke' },
+        symbolSize: 18,
+        label: { show: true, formatter: () => shortLabel(f), fontSize: 10, color: '#dff7ff', position: 'right' },
+        itemStyle: { color: colorByState(current.state) },
         emphasis: { scale: 1.35, label: { show: true } },
-        z: 6,
-      },
-      {
-        name: 'Selected current', type: 'effectScatter', data: [{ name: f.label, value: [current.reach, current.dust, current.risk], feed: f }],
-        encode: { x: 0, y: 1 }, rippleEffect: { scale: 3, brushType: 'stroke' },
-        symbolSize: 18, itemStyle: { color: colorByState(current.state) }, z: 7,
+        z: 7,
       }
     ]
   };
   state.chart.setOption(option, true);
   state.chart.on('mouseover', params => {
-    if (params.seriesName === 'Current feeds' || params.seriesName === 'Selected current') {
-      setChartNarrative(currentNarrative(params.data.feed));
-    } else if (params.seriesName === 'Selected path') {
-      setChartNarrative(pointNarrativeFromRow(f, params.data.row) + ' <b>Path note:</b> chronological movement old → now; not a link between hubs.');
+    if (params.seriesName === 'Selected feed current') {
+      setChartNarrative(currentNarrative(params.data.feed || f));
+    } else if (params.seriesName === 'Selected chronology') {
+      setChartNarrative(pathPointNarrative(f, params.data, trail));
+    } else if (params.seriesName === 'Path start' || params.seriesName === 'Path now') {
+      setChartNarrative(pointNarrativeFromRow(f, params.data.row));
     }
   });
   state.chart.on('mouseout', restoreChartNarrative);

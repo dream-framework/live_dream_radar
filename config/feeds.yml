@@ -1,0 +1,368 @@
+# Universal Ridge / Dust Radar raw-live feed registry.
+# Enabled feeds use public endpoints and no API key. Market indices are public vendor close feeds, not exchange-primary feeds.
+# No synthetic, demo, generated, or manufactured source data is used.
+# The app derives ridge/reach/dust diagnostics from raw observations after fetch.
+
+min_successful_feeds: 2
+output: data/derived/universal_ridge_radar.json
+
+# Default S2/DREAM transforms in sample units after resampling.
+analysis:
+  resample_limit: 6
+  ridge_spans: [5, 20, 60, 250]
+  scale_windows: [20, 60, 250]
+  phase_tail_points: 80
+  min_points: 40
+
+feeds:
+
+  - key: spx_index
+    enabled: true
+    domain: market_indices
+    label: SPX - S&P 500
+    short_label: SPX
+    owner: Yahoo Finance public chart feed
+    source_type: json_chart
+    source_tier: public_market_vendor
+    adapter: yahoo_chart_index
+    symbol: ^GSPC
+    range: max
+    interval: 1d
+    cadence: daily_market
+    resample: 1d
+    unit: index_points
+    metric: close
+    notes: Public vendor chart feed. Uses unadjusted quote.close observations only; not exchange-primary data.
+
+  - key: ndx_index
+    enabled: true
+    domain: market_indices
+    label: NDX - Nasdaq 100
+    short_label: NDX
+    owner: Yahoo Finance public chart feed
+    source_type: json_chart
+    source_tier: public_market_vendor
+    adapter: yahoo_chart_index
+    symbol: ^NDX
+    range: max
+    interval: 1d
+    cadence: daily_market
+    resample: 1d
+    unit: index_points
+    metric: close
+    notes: Public vendor chart feed. Uses unadjusted quote.close observations only; not exchange-primary data.
+
+  - key: dji_index
+    enabled: true
+    domain: market_indices
+    label: DJI - Dow Jones Industrial Average
+    short_label: DJI
+    owner: Yahoo Finance public chart feed
+    source_type: json_chart
+    source_tier: public_market_vendor
+    adapter: yahoo_chart_index
+    symbol: ^DJI
+    range: max
+    interval: 1d
+    cadence: daily_market
+    resample: 1d
+    unit: index_points
+    metric: close
+    notes: Public vendor chart feed. Uses unadjusted quote.close observations only; not exchange-primary data.
+
+  - key: rut_index
+    enabled: true
+    domain: market_indices
+    label: RUT - Russell 2000
+    short_label: RUT
+    owner: Yahoo Finance public chart feed
+    source_type: json_chart
+    source_tier: public_market_vendor
+    adapter: yahoo_chart_index
+    symbol: ^RUT
+    range: max
+    interval: 1d
+    cadence: daily_market
+    resample: 1d
+    unit: index_points
+    metric: close
+    notes: Public vendor chart feed. Uses unadjusted quote.close observations only; not exchange-primary data.
+
+  - key: vix_index
+    enabled: true
+    domain: market_indices
+    label: VIX - CBOE Volatility Index
+    short_label: VIX
+    owner: Yahoo Finance public chart feed
+    source_type: json_chart
+    source_tier: public_market_vendor
+    adapter: yahoo_chart_index
+    symbol: ^VIX
+    range: max
+    interval: 1d
+    cadence: daily_market
+    resample: 1d
+    unit: index_points
+    metric: close
+    notes: Public vendor chart feed. Uses unadjusted quote.close observations only; not exchange-primary data.
+
+  - key: ftse_index
+    enabled: true
+    domain: market_indices
+    label: FTSE 100
+    short_label: FTSE
+    owner: Yahoo Finance public chart feed
+    source_type: json_chart
+    source_tier: public_market_vendor
+    adapter: yahoo_chart_index
+    symbol: ^FTSE
+    range: max
+    interval: 1d
+    cadence: daily_market
+    resample: 1d
+    unit: index_points
+    metric: close
+    notes: Public vendor chart feed. Uses unadjusted quote.close observations only; not exchange-primary data.
+
+  - key: dax_index
+    enabled: true
+    domain: market_indices
+    label: DAX - Germany
+    short_label: DAX
+    owner: Yahoo Finance public chart feed
+    source_type: json_chart
+    source_tier: public_market_vendor
+    adapter: yahoo_chart_index
+    symbol: ^GDAXI
+    range: max
+    interval: 1d
+    cadence: daily_market
+    resample: 1d
+    unit: index_points
+    metric: close
+    notes: Public vendor chart feed. Uses unadjusted quote.close observations only; not exchange-primary data.
+
+  - key: cac_index
+    enabled: true
+    domain: market_indices
+    label: CAC 40 - France
+    short_label: CAC
+    owner: Yahoo Finance public chart feed
+    source_type: json_chart
+    source_tier: public_market_vendor
+    adapter: yahoo_chart_index
+    symbol: ^FCHI
+    range: max
+    interval: 1d
+    cadence: daily_market
+    resample: 1d
+    unit: index_points
+    metric: close
+    notes: Public vendor chart feed. Uses unadjusted quote.close observations only; not exchange-primary data.
+
+  - key: sx5e_index
+    enabled: true
+    domain: market_indices
+    label: Euro Stoxx 50
+    short_label: SX5E
+    owner: Yahoo Finance public chart feed
+    source_type: json_chart
+    source_tier: public_market_vendor
+    adapter: yahoo_chart_index
+    symbol: ^STOXX50E
+    range: max
+    interval: 1d
+    cadence: daily_market
+    resample: 1d
+    unit: index_points
+    metric: close
+    notes: Public vendor chart feed. Uses unadjusted quote.close observations only; not exchange-primary data.
+
+  - key: nikkei_index
+    enabled: true
+    domain: market_indices
+    label: Nikkei 225
+    short_label: NIKKEI
+    owner: Yahoo Finance public chart feed
+    source_type: json_chart
+    source_tier: public_market_vendor
+    adapter: yahoo_chart_index
+    symbol: ^N225
+    range: max
+    interval: 1d
+    cadence: daily_market
+    resample: 1d
+    unit: index_points
+    metric: close
+    notes: Public vendor chart feed. Uses unadjusted quote.close observations only; not exchange-primary data.
+
+  - key: hsi_index
+    enabled: true
+    domain: market_indices
+    label: Hang Seng Index
+    short_label: HSI
+    owner: Yahoo Finance public chart feed
+    source_type: json_chart
+    source_tier: public_market_vendor
+    adapter: yahoo_chart_index
+    symbol: ^HSI
+    range: max
+    interval: 1d
+    cadence: daily_market
+    resample: 1d
+    unit: index_points
+    metric: close
+    notes: Public vendor chart feed. Uses unadjusted quote.close observations only; not exchange-primary data.
+
+  - key: tsx_index
+    enabled: true
+    domain: market_indices
+    label: TSX Composite
+    short_label: TSX
+    owner: Yahoo Finance public chart feed
+    source_type: json_chart
+    source_tier: public_market_vendor
+    adapter: yahoo_chart_index
+    symbol: ^GSPTSE
+    range: max
+    interval: 1d
+    cadence: daily_market
+    resample: 1d
+    unit: index_points
+    metric: close
+    notes: Public vendor chart feed. Uses unadjusted quote.close observations only; not exchange-primary data.
+
+  - key: asx_index
+    enabled: true
+    domain: market_indices
+    label: ASX 200
+    short_label: ASX200
+    owner: Yahoo Finance public chart feed
+    source_type: json_chart
+    source_tier: public_market_vendor
+    adapter: yahoo_chart_index
+    symbol: ^AXJO
+    range: max
+    interval: 1d
+    cadence: daily_market
+    resample: 1d
+    unit: index_points
+    metric: close
+    notes: Public vendor chart feed. Uses unadjusted quote.close observations only; not exchange-primary data.
+
+  - key: kospi_index
+    enabled: true
+    domain: market_indices
+    label: KOSPI Composite
+    short_label: KOSPI
+    owner: Yahoo Finance public chart feed
+    source_type: json_chart
+    source_tier: public_market_vendor
+    adapter: yahoo_chart_index
+    symbol: ^KS11
+    range: max
+    interval: 1d
+    cadence: daily_market
+    resample: 1d
+    unit: index_points
+    metric: close
+    notes: Public vendor chart feed. Uses unadjusted quote.close observations only; not exchange-primary data.
+  - key: ieso_demand
+    enabled: true
+    domain: electrical_grid
+    label: IESO Ontario Demand
+    owner: Independent Electricity System Operator
+    source_type: csv
+    adapter: ieso_demand_csv
+    url: https://reports-public.ieso.ca/public/Demand/PUB_Demand.csv
+    cadence: hourly
+    resample: 1h
+    unit: MW
+    metric: ontario_demand_mw
+    value_column_candidates:
+      - Ontario Demand
+      - ONTARIO DEMAND
+      - Demand
+      - Market Demand
+    notes: Official IESO hourly demand report.
+
+  - key: nyiso_integrated_load
+    enabled: true
+    domain: electrical_grid
+    label: NYISO Integrated Real-Time Actual Load
+    owner: New York Independent System Operator
+    source_type: csv_daily
+    adapter: nyiso_pal_integrated_csv
+    url_template: https://mis.nyiso.com/public/csv/palIntegrated/{yyyymmdd}palIntegrated.csv
+    days_back: 14
+    cadence: hourly
+    resample: 1h
+    unit: MW
+    metric: integrated_load_mw
+    notes: Official NYISO public CSV. Aggregates zones into statewide load by timestamp.
+
+  - key: usgs_quakes_all_month
+    enabled: true
+    domain: geophysical
+    label: USGS Global Earthquake Activity
+    owner: United States Geological Survey
+    source_type: geojson
+    adapter: usgs_earthquake_geojson
+    url: https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson
+    cadence: near_real_time
+    resample: 1h
+    unit: quake_intensity
+    metric: seismic_activity_intensity
+    notes: Official USGS GeoJSON feed aggregated by event time into hourly physical activity measures.
+
+  - key: noaa_solar_wind_speed
+    enabled: true
+    domain: space_weather
+    label: NOAA Solar Wind Speed
+    owner: NOAA Space Weather Prediction Center
+    source_type: json_table
+    adapter: noaa_swpc_solar_wind_plasma
+    url: https://services.swpc.noaa.gov/products/solar-wind/plasma-7-day.json
+    cadence: real_time
+    resample: 5min
+    unit: km/s
+    metric: speed_kms
+    value_field: speed
+    notes: Official NOAA SWPC real-time solar wind plasma JSON.
+
+  - key: noaa_solar_wind_density
+    enabled: true
+    domain: space_weather
+    label: NOAA Solar Wind Density
+    owner: NOAA Space Weather Prediction Center
+    source_type: json_table
+    adapter: noaa_swpc_solar_wind_plasma
+    url: https://services.swpc.noaa.gov/products/solar-wind/plasma-7-day.json
+    cadence: real_time
+    resample: 5min
+    unit: p/cm3
+    metric: density_pcm3
+    value_field: density
+    notes: Official NOAA SWPC real-time solar wind plasma JSON.
+
+  - key: noaa_planetary_kp
+    enabled: true
+    domain: space_weather
+    label: NOAA Planetary K Index
+    owner: NOAA Space Weather Prediction Center
+    source_type: json_table
+    adapter: noaa_swpc_planetary_kp
+    url: https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json
+    cadence: three_hourly
+    resample: 3h
+    unit: Kp
+    metric: kp_index
+    notes: Official NOAA SWPC planetary K-index JSON.
+
+# Not enabled by default because these usually require registration/API keys or more brittle query windows.
+# Keep these in README as candidate extensions, not silent fallbacks.
+optional_keyed_sources:
+  - PJM Data Miner 2 requires approved API/subscription key.
+  - ERCOT Public API requires registration/authentication for direct API use.
+  - ENTSO-E Transparency Platform requires a security token.
+  - ISO New England web services expose public data, but some endpoints may require credentials.

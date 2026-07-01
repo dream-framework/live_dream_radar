@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Universal Ridge / Dust Radar</title>
+  <meta name="description" content="DREAM/S2 universal ridge, reach, and dust radar using raw live public datasets only." />
+  <link rel="stylesheet" href="assets/style.css?v=20260701-markets-phase-path-1" />
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="eyebrow">DREAM / S2 / RAW LIVE UNIVERSAL STRUCTURE RADAR</div>
+        <h1>Universal Ridge / Dust Radar</h1>
+        <p>Raw public feeds only: global market indices, electrical grids, geophysical activity, and space-weather streams. Reach ↓ + Dust ↑ is the core phase transition.</p>
+      </div>
+      <div class="top-meta">
+        <div class="meta-chip"><span>Generated</span><b id="generatedAt">loading</b></div>
+        <div class="meta-chip"><span>Mode</span><b id="mode">loading</b></div>
+        <div class="meta-chip"><span>Global</span><b id="globalState">loading</b></div>
+        <button id="themeBtn" type="button">Dark</button>
+      </div>
+    </header>
+
+    <section id="notice" class="notice">Loading raw live bundle...</section>
+
+    <section class="controls">
+      <label><span>Feed</span><select id="feedSelect"></select></label>
+      <label><span>View</span><select id="viewSelect"><option value="recent">Recent</option><option value="full">Full bundle tail</option></select></label>
+      <label><span>Domain</span><select id="domainSelect"><option value="all">All domains</option></select></label>
+      <div class="policy-note">No synthetic/demo fallback. Source observations are raw public feeds; market indices use public close feeds; ridge/reach/dust are derived diagnostics.</div>
+    </section>
+
+    <section id="kpis" class="kpis"></section>
+
+    <section class="tabs">
+      <button class="tab active" type="button" data-tab="phase">Reach × Dust</button>
+      <button class="tab" type="button" data-tab="timeseries">Ridge Theater</button>
+      <button class="tab" type="button" data-tab="multiscale">Multi-scale S2</button>
+      <button class="tab" type="button" data-tab="sources">Raw Sources</button>
+      <button class="tab" type="button" data-tab="failures">Failures / Nulls</button>
+    </section>
+
+    <main class="main-grid">
+      <section class="chart-panel">
+        <div class="chart-head">
+          <div><h2 id="chartTitle">Reach × Dust phase diagram</h2><p id="chartSubtitle">Trajectory through structural state space.</p></div>
+          <div class="chart-tabs">
+            <button class="chart-tab active" type="button" data-chart="phase">Phase</button>
+            <button class="chart-tab" type="button" data-chart="ridge">Ridge</button>
+            <button class="chart-tab" type="button" data-chart="signals">Signals</button>
+          </div>
+        </div>
+        <div id="mainChart"></div>
+        <div id="chartNarrative" class="chart-narrative"></div>
+      </section>
+
+      <aside class="side">
+        <section class="selected-card">
+          <div class="selected-head"><div><h2 id="selectedName">Selected feed</h2><p id="selectedSource">source</p></div><span id="selectedState" class="pill">NA</span></div>
+          <div id="currentRead" class="current-read"></div>
+        </section>
+        <section class="narrative-card"><div id="narrative">Waiting for bundle...</div></section>
+      </aside>
+    </main>
+
+    <section id="workspace" class="workspace"></section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <script src="assets/app.js?v=20260701-markets-phase-path-1"></script>
+</body>
+</html>

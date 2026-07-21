@@ -1,8 +1,8 @@
 {
   "schema": "universal_ridge_dust_radar_manifest.v1",
-  "generated_at": "2026-07-21T12:02:13.786739+00:00",
-  "build_id": "269ee851f868df48",
-  "bundle_sha256": "269ee851f868df48fbca6298fbb63d30d16ba4bb0477b183c58621e66ba66dcf",
+  "generated_at": "2026-07-21T14:26:25.884551+00:00",
+  "build_id": "bcf55a2f7a46c764",
+  "bundle_sha256": "bcf55a2f7a46c764440ec917ebba05d7c2c16dfdc9045f90ab064b65af78ecee",
   "bundle_url": "data/derived/universal_ridge_radar.json",
   "mode": "raw live public sources only",
   "global_state": "FRAGILE",
